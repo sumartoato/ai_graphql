@@ -1,31 +1,24 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+/**
+ * Extract user dari JWT token di header Authorization.
+ * Dipanggil di context Apollo Server setiap request.
+ */
+function authenticateUser(req) {
+  const authHeader = req?.headers?.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    req.user = null;
-    return next();
+    return null;
   }
 
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret);
-    req.user = decoded;
-  } catch (err) {
-    req.user = null;
+    return jwt.verify(token, config.jwt.secret);
+  } catch {
+    return null;
   }
+}
 
-  next();
-};
-
-const requireAuth = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-  next();
-};
-
-module.exports = { authMiddleware, requireAuth };
+module.exports = { authenticateUser };
